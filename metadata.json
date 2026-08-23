@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "PY LOCALHOST",
+  "description": "A production-oriented native Android application built with Kotlin and Jetpack Compose. It serves as a Python project runner and mobile IDE.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

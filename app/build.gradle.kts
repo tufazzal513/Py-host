@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.pymobileide"
+    namespace = "com.localhost.py"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.pymobileide"
+        applicationId = "com.localhost.py"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
