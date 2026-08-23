@@ -2,6 +2,11 @@ package com.localhost.py.data.storage
 
 import android.content.Context
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 class StorageManager(private val context: Context) {
     val rootDir: File get() = File(context.getExternalFilesDir(null), "PyMobileIDE").apply { mkdirs() }
@@ -43,6 +48,72 @@ class StorageManager(private val context: Context) {
     fun saveFile(file: File, content: String) {
         if (file.exists() && file.isFile) {
             file.writeText(content)
+        }
+    }
+
+    fun exportProjectZip(projectName: String, destinationZip: File): Boolean {
+        val projectDir = getProjectDir(projectName) ?: return false
+        try {
+            ZipOutputStream(FileOutputStream(destinationZip)).use { zos ->
+                projectDir.walkTopDown().forEach { file ->
+                    if (file.name == ".packages" || file.name == "__pycache__") return@forEach
+                    if (file.isDirectory && file.name == ".packages") return@forEach
+                    
+                    val relativePath = file.toRelativeString(projectDir)
+                    if (relativePath.isEmpty()) return@forEach
+                    
+                    val entry = ZipEntry(if (file.isDirectory) "$relativePath/" else relativePath)
+                    zos.putNextEntry(entry)
+                    if (file.isFile) {
+                        file.inputStream().use { it.copyTo(zos) }
+                    }
+                    zos.closeEntry()
+                }
+            }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    fun importProjectZip(zipFile: File, projectName: String): Boolean {
+        val safeName = projectName.replace("[^a-zA-Z0-9_-]".toRegex(), "_")
+        val destDir = File(projectsDir, safeName)
+        if (!destDir.exists()) destDir.mkdirs()
+
+        try {
+            ZipInputStream(FileInputStream(zipFile)).use { zis ->
+                var entry: ZipEntry? = zis.nextEntry
+                while (entry != null) {
+                    val entryName = entry.name
+                    if (entryName.contains("..")) {
+                        throw SecurityException("Zip extraction failed: path traversal attempt detected.")
+                    }
+                    
+                    val newFile = File(destDir, entryName)
+                    val canonicalDestPath = destDir.canonicalPath
+                    val canonicalNewFilePath = newFile.canonicalPath
+                    
+                    if (!canonicalNewFilePath.startsWith(canonicalDestPath + File.separator)) {
+                        throw SecurityException("Zip extraction failed: path traversal attempt detected.")
+                    }
+
+                    if (entry.isDirectory) {
+                        newFile.mkdirs()
+                    } else {
+                        newFile.parentFile?.mkdirs()
+                        FileOutputStream(newFile).use { fos ->
+                            zis.copyTo(fos)
+                        }
+                    }
+                    entry = zis.nextEntry
+                }
+            }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
     }
 }

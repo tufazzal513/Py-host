@@ -1,15 +1,19 @@
 package com.localhost.py.ui.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.localhost.py.data.git.GitManager
 import com.localhost.py.data.storage.StorageManager
 import com.localhost.py.domain.models.Project
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 
 class ProjectsViewModel(application: Application) : AndroidViewModel(application) {
@@ -64,5 +68,32 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
 
     fun clearCloneStatus() {
         _cloneStatus.value = null
+    }
+
+    fun importZip(uri: Uri, projectName: String) {
+        viewModelScope.launch {
+            _isCloning.value = true
+            _cloneStatus.value = "Importing ZIP..."
+            val success = withContext(Dispatchers.IO) {
+                try {
+                    val context = getApplication<Application>()
+                    val tempFile = File.createTempFile("import", ".zip", context.cacheDir)
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    val result = storageManager.importProjectZip(tempFile, projectName)
+                    tempFile.delete()
+                    result
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+            _cloneStatus.value = if (success) "ZIP imported successfully" else "Failed to import ZIP"
+            _isCloning.value = false
+            if (success) loadProjects()
+        }
     }
 }

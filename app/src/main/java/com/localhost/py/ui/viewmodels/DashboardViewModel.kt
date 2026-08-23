@@ -12,6 +12,9 @@ import com.localhost.py.pythonruntime.PythonRuntimeManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val storageManager = StorageManager(application)
@@ -88,5 +91,36 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     
     fun sendInput(text: String) {
         ProcessMonitor.sendInput(text)
+    }
+
+    fun exportZip(projectName: String, uri: android.net.Uri) {
+        viewModelScope.launch {
+            _isInstalling.value = true
+            ProcessMonitor.appendOutput("\nExporting project to ZIP...\n")
+            val success = withContext(Dispatchers.IO) {
+                try {
+                    val tempFile = File.createTempFile("export", ".zip", context.cacheDir)
+                    val result = storageManager.exportProjectZip(projectName, tempFile)
+                    if (result) {
+                        context.contentResolver.openOutputStream(uri)?.use { output ->
+                            tempFile.inputStream().use { input ->
+                                input.copyTo(output)
+                            }
+                        }
+                    }
+                    tempFile.delete()
+                    result
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+            if (success) {
+                ProcessMonitor.appendOutput("Project exported successfully.\n")
+            } else {
+                ProcessMonitor.appendOutput("Error: Failed to export project.\n")
+            }
+            _isInstalling.value = false
+        }
     }
 }

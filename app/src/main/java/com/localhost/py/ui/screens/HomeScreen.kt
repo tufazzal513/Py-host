@@ -1,11 +1,14 @@
 package com.localhost.py.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
@@ -29,11 +32,22 @@ fun HomeScreen(
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showCloneDialog by remember { mutableStateOf(false) }
+    var showImportZipDialog by remember { mutableStateOf(false) }
     var newProjectName by remember { mutableStateOf("") }
+    var importProjectName by remember { mutableStateOf("") }
     var repoUrl by remember { mutableStateOf("") }
     var cloneProjectName by remember { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    val zipPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null && importProjectName.isNotBlank()) {
+            viewModel.importZip(uri, importProjectName)
+            importProjectName = ""
+        }
+    }
 
     LaunchedEffect(cloneStatus) {
         cloneStatus?.let {
@@ -48,6 +62,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("PY LOCALHOST") },
                 actions = {
+                    IconButton(onClick = { showImportZipDialog = true }, enabled = !isCloning) {
+                        Icon(Icons.Default.Archive, contentDescription = "Import ZIP")
+                    }
                     IconButton(onClick = { showCloneDialog = true }, enabled = !isCloning) {
                         Icon(Icons.Default.CloudDownload, contentDescription = "Clone from GitHub")
                     }
@@ -168,6 +185,32 @@ fun HomeScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showCloneDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
+        if (showImportZipDialog) {
+            AlertDialog(
+                onDismissRequest = { showImportZipDialog = false },
+                title = { Text("Import ZIP Project") },
+                text = {
+                    OutlinedTextField(
+                        value = importProjectName,
+                        onValueChange = { importProjectName = it },
+                        label = { Text("Project Name") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        if (importProjectName.isNotBlank()) {
+                            showImportZipDialog = false
+                            zipPickerLauncher.launch("application/zip")
+                        }
+                    }) { Text("Select ZIP") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showImportZipDialog = false }) { Text("Cancel") }
                 }
             )
         }

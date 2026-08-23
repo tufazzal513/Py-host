@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +47,14 @@ fun ProjectDashboardScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { }
     )
+
+    val zipExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportZip(projectName, uri)
+        }
+    }
     
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -63,6 +72,9 @@ fun ProjectDashboardScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { zipExportLauncher.launch("$projectName.zip") }, enabled = !isInstalling) {
+                        Icon(Icons.Default.Archive, contentDescription = "Export ZIP")
+                    }
                     IconButton(onClick = { showGitDialog = true }) {
                         Icon(Icons.Default.Sync, contentDescription = "Git Commit & Push")
                     }
