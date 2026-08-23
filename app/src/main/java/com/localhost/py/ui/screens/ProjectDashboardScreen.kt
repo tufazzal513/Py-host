@@ -35,6 +35,9 @@ fun ProjectDashboardScreen(
     val isInstalling by viewModel.isInstalling.collectAsState()
     
     var localServerPort by remember { mutableStateOf("5000") }
+    var showGitDialog by remember { mutableStateOf(false) }
+    var commitMessage by remember { mutableStateOf("Update via PY LOCALHOST IDE") }
+    var gitToken by remember { mutableStateOf("") }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -54,6 +57,11 @@ fun ProjectDashboardScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showGitDialog = true }) {
+                        Icon(Icons.Default.Sync, contentDescription = "Git Commit & Push")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -77,7 +85,7 @@ fun ProjectDashboardScreen(
                     
                     val statusText = when {
                         isRunning -> "Status: Running (Foreground Service)"
-                        isInstalling -> "Status: Installing dependencies..."
+                        isInstalling -> "Status: Busy (Dependencies/Git)..."
                         else -> "Status: Ready"
                     }
                     val statusColor = when {
@@ -218,5 +226,41 @@ fun ProjectDashboardScreen(
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
+    }
+
+    if (showGitDialog) {
+        AlertDialog(
+            onDismissRequest = { showGitDialog = false },
+            title = { Text("Commit & Push") },
+            text = {
+                Column {
+                    Text("This will commit all local changes and push them to your repository.", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = commitMessage,
+                        onValueChange = { commitMessage = it },
+                        label = { Text("Commit Message") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = gitToken,
+                        onValueChange = { gitToken = it },
+                        label = { Text("GitHub Token (PAT)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        supportingText = { Text("Required for pushing. Leave blank for local commit only.") }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.commitAndPush(projectName, commitMessage, gitToken)
+                    showGitDialog = false
+                }) { Text("Commit & Push") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGitDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }

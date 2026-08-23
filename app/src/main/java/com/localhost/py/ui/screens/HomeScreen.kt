@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,13 +24,34 @@ fun HomeScreen(
     viewModel: ProjectsViewModel = viewModel()
 ) {
     val projects by viewModel.projects.collectAsState()
+    val isCloning by viewModel.isCloning.collectAsState()
+    val cloneStatus by viewModel.cloneStatus.collectAsState()
+
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showCloneDialog by remember { mutableStateOf(false) }
     var newProjectName by remember { mutableStateOf("") }
+    var repoUrl by remember { mutableStateOf("") }
+    var cloneProjectName by remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(cloneStatus) {
+        cloneStatus?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearCloneStatus()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("PY LOCALHOST - Projects") },
+                title = { Text("PY LOCALHOST") },
+                actions = {
+                    IconButton(onClick = { showCloneDialog = true }, enabled = !isCloning) {
+                        Icon(Icons.Default.CloudDownload, contentDescription = "Clone from GitHub")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -53,7 +75,8 @@ fun HomeScreen(
                 Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("No Projects Found", style = MaterialTheme.typography.headlineSmall)
-                Text("Tap + to create your first Python project.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Tap + to create a project or the Cloud icon to clone from GitHub.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
         } else {
             LazyColumn(
@@ -101,6 +124,50 @@ fun HomeScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
+        if (showCloneDialog) {
+            AlertDialog(
+                onDismissRequest = { showCloneDialog = false },
+                title = { Text("Clone from GitHub") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = repoUrl,
+                            onValueChange = { 
+                                repoUrl = it
+                                if (cloneProjectName.isBlank() && it.contains("/")) {
+                                    cloneProjectName = it.substringAfterLast("/").removeSuffix(".git")
+                                }
+                            },
+                            label = { Text("Git Repository URL") },
+                            placeholder = { Text("https://github.com/user/repo.git") },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = cloneProjectName,
+                            onValueChange = { cloneProjectName = it },
+                            label = { Text("Project Folder Name") },
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (repoUrl.isNotBlank() && cloneProjectName.isNotBlank()) {
+                                viewModel.cloneProject(repoUrl.trim(), cloneProjectName.trim())
+                                showCloneDialog = false
+                                repoUrl = ""
+                                cloneProjectName = ""
+                            }
+                        }
+                    ) { Text("Clone") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCloneDialog = false }) { Text("Cancel") }
                 }
             )
         }

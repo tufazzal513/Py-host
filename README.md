@@ -1,37 +1,23 @@
 # PY LOCALHOST
 
-PY LOCALHOST is a production-oriented native Android application built with Kotlin and Jetpack Compose. It serves as a Python project runner and mobile IDE.
+A production-oriented native Android application built with Kotlin, Jetpack Compose, and Chaquopy. It acts as an embedded Python Runtime environment, Localhost Server, and Mobile IDE.
 
-## Features (Completed Phases)
+## Features
 
-### Phase 1-5: Core IDE & Runtime
-- Clean Jetpack Compose UI.
-- Local Storage Management (projects organized in folders).
-- Multi-file Code Editor with Syntax Highlighting foundation.
-- Embedded Chaquopy Runtime for On-Device Execution.
-- PIP Integration for installing `requirements.txt`.
+### 1. Embedded Python Runtime
+- Built on top of Chaquopy (Python 3.11).
+- Runs Python scripts in an isolated process foreground service.
+- Dynamic dependency installation (`pip install`) via `requirements.txt`.
 
-### Phase 6 & 7: Process Manager & Foreground Service
-- **Real-Time Streaming Output:** Python `stdout` is redirected live via a Kotlin interface.
-- **Android Foreground Service:** Long-running Python scripts (like Telegram/Discord bots or Flask servers) continue to run when the app is minimized.
-- **Process Control:** Real "Stop" and "Restart" functionality cleanly terminating the background Python job.
-- **Persistent Notification:** Keeps the OS from killing the Python process due to battery optimizations.
+### 2. Localhost Server & Built-in WebView
+- Run web servers (Flask, FastAPI, Django, Tornado, etc.) on `localhost:<port>`.
+- Built-in WebView preview browser allows instantaneous testing of your running localhost web apps.
 
-## How to Build
+### 3. Native IDE & Code Editor
+- Real-time Python Syntax Highlighting (Darcula Theme).
+- Line numbers, monospace typography, and multi-file project explorer.
+- Interactive Terminal Console with Stdin (`input()`) support.
 
-1. Push this code to a GitHub repository.
-2. Go to the **Actions** tab of your repository.
-3. Download `app-debug.apk` from the latest successful build.
-
-## Next Phases
-- **Phase 8:** Advanced Terminal Interface.
-- **Phase 9:** Local Web Server URL detection.
-
-### Phase 8 & 9: Terminal Input & Local Server Web Preview
-- **Interactive Stdin:** `input()` prompts in Python can now receive data natively via the UI.
-- **Local Web Server Detection:** If you launch a Flask, Django, or FastAPI server on `localhost:PORT`, you can use the built-in WebView preview browser to see your server running natively inside the IDE!
-
-### Phase 10: Syntax Highlighting & Code Editor Upgrade
-- **Custom Jetpack Compose VisualTransformation:** Developed a real-time regex-based Syntax Highlighter specifically for Python.
-- **Darcula Theme:** The code editor now mimics the IntelliJ/PyCharm dark theme (Darcula).
-- Colors elements dynamically: Keywords (Orange), Strings (Green), Comments (Gray), Numbers (Blue), Functions (Yellow).
+### 4. Git & GitHub Integration (Phase 11)
+- Clone public/private repositories directly from GitHub.
+- Local commits and remote pushes via GitHub Personal Access Tokens (PAT).

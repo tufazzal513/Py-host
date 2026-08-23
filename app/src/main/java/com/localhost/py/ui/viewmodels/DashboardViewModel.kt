@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.localhost.py.data.git.GitManager
 import com.localhost.py.data.storage.StorageManager
 import com.localhost.py.processmanager.ProcessMonitor
 import com.localhost.py.processmanager.PythonProcessService
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val storageManager = StorageManager(application)
     private val pythonRuntime = PythonRuntimeManager()
+    private val gitManager = GitManager()
     private val context = application.applicationContext
 
     val output: StateFlow<String> = ProcessMonitor.processOutput
@@ -61,6 +63,21 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 ProcessMonitor.appendOutput("Error: Project directory not found.\n")
             }
             
+            _isInstalling.value = false
+        }
+    }
+
+    fun commitAndPush(projectName: String, message: String, token: String) {
+        viewModelScope.launch {
+            _isInstalling.value = true
+            ProcessMonitor.appendOutput("\n[Git]: Committing changes...\n")
+            val projectDir = storageManager.getProjectDir(projectName)
+            if (projectDir != null) {
+                val result = gitManager.commitAndPush(projectDir, message, token)
+                ProcessMonitor.appendOutput("[Git]: $result\n")
+            } else {
+                ProcessMonitor.appendOutput("[Git Error]: Project directory not found.\n")
+            }
             _isInstalling.value = false
         }
     }
