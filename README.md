@@ -2,10 +2,18 @@
 
 PyMobile IDE is a production-oriented native Android application built with Kotlin and Jetpack Compose. It serves as a Python project runner and mobile IDE.
 
-## Features (Phase 1)
+## Features (Completed Phases)
+
+### Phase 1: Native Foundation
 - Clean, responsive Android UI built with Jetpack Compose.
 - Project structure set up for scaling (MVVM/Clean Architecture readiness).
 - Automated GitHub Actions workflow for building the APK.
+
+### Phase 2: Project & File Manager
+- **Local Storage Management:** Utilizes Android's `getExternalFilesDir` to securely create the `PyMobileIDE/projects/` directory.
+- **Projects Dashboard:** The Home Screen automatically scans and lists existing Python projects.
+- **Project Creation:** Users can create new projects via an interactive FAB. This automatically provisions a new directory with a default `main.py` and `requirements.txt`.
+- **Navigation:** Deep links the selected project into a detailed Project Dashboard that prepares configurations for Python Version, Entry Points, and dependencies.
 
 ## How to Build
 
@@ -24,11 +32,6 @@ This project is configured to automatically build an Android APK whenever you pu
 4. Let Gradle sync and resolve dependencies.
 5. Click **Run** to launch the app on an emulator or physical device.
 
-## Architecture
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose
-- **Build System**: Gradle (Kotlin DSL)
-- **CI/CD**: GitHub Actions
-
 ## Next Phases
-Future development phases will implement the embedded Python runtime, native code editor, Git integration, and terminal interfaces as outlined in the project specification.
+- **Phase 3:** Native Code Editor (Syntax Highlighting, Multi-tab support).
+- **Phase 4:** Embedded Python Runtime (Local execution of `main.py`).
