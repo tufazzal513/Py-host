@@ -1,3 +1,7 @@
+#!/bin/bash
+
+echo "1. Adding Log/Output Sharing Feature to Dashboard..."
+cat << 'INNER_EOF' > app/src/main/java/com/localhost/py/ui/screens/ProjectDashboardScreen.kt
 package com.localhost.py.ui.screens
 
 import android.Manifest
@@ -283,3 +287,13 @@ fun ProjectDashboardScreen(
         )
     }
 }
+INNER_EOF
+
+echo "2. Updating README..."
+cat << 'INNER_EOF' >> README.md
+
+### Phase 13: Log/Output Export
+- **Share Execution Logs:** You can now instantly share or export your Python execution logs / server output via the Share icon in the terminal console.
+INNER_EOF
+
+echo "Phase 13 Done!"
