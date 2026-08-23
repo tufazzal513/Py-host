@@ -21,3 +21,7 @@ A production-oriented native Android application built with Kotlin, Jetpack Comp
 ### 4. Git & GitHub Integration (Phase 11)
 - Clone public/private repositories directly from GitHub.
 - Local commits and remote pushes via GitHub Personal Access Tokens (PAT).
+
+### Phase 12: File Explorer Upgrade
+- **Nested Project Tree:** Implemented a full recursive file manager within the Editor Drawer.
+- **Create & Delete:** Easily add folders (e.g. `templates/`, `static/`), Python scripts, HTML files directly in the app. Long-press/Click file icons to delete.

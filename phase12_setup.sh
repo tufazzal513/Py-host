@@ -1,3 +1,7 @@
+#!/bin/bash
+
+echo "1. Writing Advanced EditorScreen (File Manager included)..."
+cat << 'INNER_EOF' > app/src/main/java/com/localhost/py/ui/screens/EditorScreen.kt
 package com.localhost.py.ui.screens
 
 import androidx.compose.foundation.background
@@ -277,3 +281,14 @@ fun EditorScreen(navController: NavController, projectName: String) {
         )
     }
 }
+INNER_EOF
+
+echo "2. Updating README..."
+cat << 'INNER_EOF' >> README.md
+
+### Phase 12: File Explorer Upgrade
+- **Nested Project Tree:** Implemented a full recursive file manager within the Editor Drawer.
+- **Create & Delete:** Easily add folders (e.g. `templates/`, `static/`), Python scripts, HTML files directly in the app. Long-press/Click file icons to delete.
+INNER_EOF
+
+echo "Phase 12 Done!"
