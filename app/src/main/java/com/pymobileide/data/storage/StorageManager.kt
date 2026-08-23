@@ -25,4 +25,24 @@ class StorageManager(private val context: Context) {
     fun listProjects(): List<File> {
         return projectsDir.listFiles()?.filter { it.isDirectory }?.sortedByDescending { it.lastModified() } ?: emptyList()
     }
+
+    fun getProjectDir(name: String): File? {
+        val safeName = name.replace("[^a-zA-Z0-9_-]".toRegex(), "_")
+        val dir = File(projectsDir, safeName)
+        return if (dir.exists() && dir.isDirectory) dir else null
+    }
+
+    fun getFileTree(dir: File): List<File> {
+        return dir.listFiles()?.sortedWith(compareBy({ !it.isDirectory }, { it.name })) ?: emptyList()
+    }
+
+    fun readFile(file: File): String {
+        return if (file.exists() && file.isFile) file.readText() else ""
+    }
+
+    fun saveFile(file: File, content: String) {
+        if (file.exists() && file.isFile) {
+            file.writeText(content)
+        }
+    }
 }

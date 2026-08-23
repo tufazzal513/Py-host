@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.pymobileide.ui.screens.HomeScreen
 import com.pymobileide.ui.screens.ProjectDashboardScreen
+import com.pymobileide.ui.screens.EditorScreen
 
 @Composable
 fun AppNavigation() {
@@ -20,6 +21,13 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val projectName = backStackEntry.arguments?.getString("projectName") ?: "Unknown"
             ProjectDashboardScreen(navController, projectName)
+        }
+        composable(
+            route = "editor/{projectName}",
+            arguments = listOf(navArgument("projectName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val projectName = backStackEntry.arguments?.getString("projectName") ?: "Unknown"
+            EditorScreen(navController, projectName)
         }
     }
 }

@@ -15,6 +15,17 @@ PyMobile IDE is a production-oriented native Android application built with Kotl
 - **Project Creation:** Users can create new projects via an interactive FAB. This automatically provisions a new directory with a default `main.py` and `requirements.txt`.
 - **Navigation:** Deep links the selected project into a detailed Project Dashboard that prepares configurations for Python Version, Entry Points, and dependencies.
 
+### Phase 3: Native Code Editor
+- **File Browser Drawer:** A slide-out navigation drawer displaying the project's real file tree.
+- **Code Editor View:** A built-in code editing area using Jetpack Compose `BasicTextField` with horizontal and vertical scrolling.
+- **Line Numbers:** Automatic calculation and rendering of code line numbers dynamically aligned with the code field.
+- **Save State Management:** Real-time state tracking that highlights when a file has unsaved changes and enables the "Save" action to persist edits back to the physical device storage.
+
+### Phase 4: Embedded Python Runtime
+- **Chaquopy Integration:** Implemented the Chaquopy plugin directly into the Gradle build to compile and bundle a real Python interpreter natively.
+- **On-Device Execution:** Tapping "Run" connects to the `PythonRuntimeManager` which runs the selected `main.py` directly on the Android CPU.
+- **Output Redirection Console:** Dynamically catches and routes Python `stdout` and `stderr` directly into a custom UI log console displayed inside the Project Dashboard.
+
 ## How to Build
 
 ### Using GitHub Actions (Automated)
@@ -33,5 +44,4 @@ This project is configured to automatically build an Android APK whenever you pu
 5. Click **Run** to launch the app on an emulator or physical device.
 
 ## Next Phases
-- **Phase 3:** Native Code Editor (Syntax Highlighting, Multi-tab support).
-- **Phase 4:** Embedded Python Runtime (Local execution of `main.py`).
+- **Phase 5:** Dependency Manager (`pip` integration).
