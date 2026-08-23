@@ -1,5 +1,7 @@
 package com.pymobileide.ui.screens
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.pymobileide.ui.viewmodels.DashboardViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +31,18 @@ fun ProjectDashboardScreen(
     val output by viewModel.output.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
     val isInstalling by viewModel.isInstalling.collectAsState()
+
+    // Request Notification permission for Android 13+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { }
+    )
+    
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -57,7 +73,7 @@ fun ProjectDashboardScreen(
                     Text("Dependencies: requirements.txt", style = MaterialTheme.typography.bodyMedium)
                     
                     val statusText = when {
-                        isRunning -> "Status: Running..."
+                        isRunning -> "Status: Running (Foreground Service)"
                         isInstalling -> "Status: Installing dependencies..."
                         else -> "Status: Ready"
                     }
@@ -71,15 +87,28 @@ fun ProjectDashboardScreen(
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = { viewModel.runProject(projectName) }, 
-                    enabled = !isRunning && !isInstalling,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (isRunning) "Running..." else "Run")
+                if (isRunning) {
+                    Button(
+                        onClick = { viewModel.stopProject() }, 
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Stop")
+                    }
+                } else {
+                    Button(
+                        onClick = { viewModel.runProject(projectName) }, 
+                        enabled = !isInstalling,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Run")
+                    }
                 }
+                
                 OutlinedButton(
                     onClick = { viewModel.installDependencies(projectName) }, 
                     enabled = !isRunning && !isInstalling,
@@ -100,7 +129,7 @@ fun ProjectDashboardScreen(
                 Text("Open Editor (Files)")
             }
             
-            if (output != null) {
+            if (output.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
@@ -119,7 +148,7 @@ fun ProjectDashboardScreen(
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         val scrollState = rememberScrollState()
                         Text(
-                            text = output ?: "",
+                            text = output,
                             style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface),
                             modifier = Modifier.verticalScroll(scrollState).fillMaxSize()
                         )

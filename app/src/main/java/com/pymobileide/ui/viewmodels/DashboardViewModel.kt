@@ -1,9 +1,12 @@
 package com.pymobileide.ui.viewmodels
 
 import android.app.Application
+import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pymobileide.data.storage.StorageManager
+import com.pymobileide.processmanager.ProcessMonitor
+import com.pymobileide.processmanager.PythonProcessService
 import com.pymobileide.pythonruntime.PythonRuntimeManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,44 +15,50 @@ import kotlinx.coroutines.launch
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val storageManager = StorageManager(application)
     private val pythonRuntime = PythonRuntimeManager()
+    private val context = application.applicationContext
 
-    private val _output = MutableStateFlow<String?>(null)
-    val output: StateFlow<String?> = _output
-
-    private val _isRunning = MutableStateFlow(false)
-    val isRunning: StateFlow<Boolean> = _isRunning
+    val output: StateFlow<String> = ProcessMonitor.processOutput
+    val isRunning: StateFlow<Boolean> = ProcessMonitor.isRunning
 
     private val _isInstalling = MutableStateFlow(false)
     val isInstalling: StateFlow<Boolean> = _isInstalling
 
     fun runProject(projectName: String) {
-        viewModelScope.launch {
-            _isRunning.value = true
-            _output.value = "Starting project...\n"
-            
-            val projectDir = storageManager.getProjectDir(projectName)
-            if (projectDir != null) {
-                val result = pythonRuntime.runProject(projectDir.absolutePath, "main.py")
-                _output.value = _output.value + result.ifBlank { "[Process completed with no output]" }
-            } else {
-                _output.value = "Project directory not found."
+        val projectDir = storageManager.getProjectDir(projectName)
+        if (projectDir != null) {
+            val intent = Intent(context, PythonProcessService::class.java).apply {
+                action = PythonProcessService.ACTION_START
+                putExtra(PythonProcessService.EXTRA_PROJECT_DIR, projectDir.absolutePath)
+                putExtra(PythonProcessService.EXTRA_PROJECT_NAME, projectName)
             }
-            
-            _isRunning.value = false
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } else {
+            ProcessMonitor.appendOutput("Error: Project directory not found.\n")
         }
+    }
+
+    fun stopProject() {
+        val intent = Intent(context, PythonProcessService::class.java).apply {
+            action = PythonProcessService.ACTION_STOP
+        }
+        context.startService(intent)
     }
 
     fun installDependencies(projectName: String) {
         viewModelScope.launch {
             _isInstalling.value = true
-            _output.value = "Installing dependencies. This may take a moment...\n"
+            ProcessMonitor.appendOutput("Installing dependencies. This may take a moment...\n")
             
             val projectDir = storageManager.getProjectDir(projectName)
             if (projectDir != null) {
                 val result = pythonRuntime.installDependencies(projectDir.absolutePath)
-                _output.value = _output.value + result
+                ProcessMonitor.appendOutput(result)
             } else {
-                _output.value = "Project directory not found."
+                ProcessMonitor.appendOutput("Error: Project directory not found.\n")
             }
             
             _isInstalling.value = false
@@ -57,6 +66,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
     
     fun clearOutput() {
-        _output.value = null
+        ProcessMonitor.clearOutput()
     }
 }

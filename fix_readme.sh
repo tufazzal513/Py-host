@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > README.md
 # PyMobile IDE
 
 PyMobile IDE is a production-oriented native Android application built with Kotlin and Jetpack Compose. It serves as a Python project runner and mobile IDE.
@@ -26,3 +28,4 @@ PyMobile IDE is a production-oriented native Android application built with Kotl
 ## Next Phases
 - **Phase 8:** Advanced Terminal Interface.
 - **Phase 9:** Local Web Server URL detection.
+INNER_EOF

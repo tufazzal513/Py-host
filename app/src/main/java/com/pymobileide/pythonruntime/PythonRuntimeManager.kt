@@ -5,13 +5,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PythonRuntimeManager {
-    suspend fun runProject(projectDir: String, entryPoint: String): String = withContext(Dispatchers.IO) {
+    suspend fun runProjectStream(projectDir: String, entryPoint: String, callback: OutputCallback) = withContext(Dispatchers.IO) {
         try {
             val py = Python.getInstance()
             val runner = py.getModule("runner")
-            runner.callAttr("run_project", projectDir, entryPoint).toString()
+            runner.callAttr("run_project_stream", projectDir, entryPoint, callback)
         } catch (e: Exception) {
-            e.message ?: "Unknown error"
+            callback.onOutput("\n[Runtime Error]: ${e.message}\n")
         }
     }
 
