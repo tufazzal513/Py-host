@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.localhost.py.data.storage.StorageManager
-import com.localhost.py.ui.components.PythonSyntaxHighlighter
 import kotlinx.coroutines.launch
 import java.io.File
 
