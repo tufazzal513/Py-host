@@ -29,6 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.localhost.py.processmanager.ProcessMonitor
 import com.localhost.py.ui.viewmodels.DashboardViewModel
@@ -42,7 +43,7 @@ import java.nio.charset.StandardCharsets
 fun AdvancedTerminalScreen(
     navController: NavController,
     projectName: String,
-    viewModel: DashboardViewModel
+    viewModel: DashboardViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val output by viewModel.output.collectAsState()
@@ -188,7 +189,7 @@ fun AdvancedTerminalScreen(
                         }
                     }
                 }
-                HorizontalDivider(color = Color(0xFF2E3B2F))
+                Divider(color = Color(0xFF2E3B2F))
             }
 
             // Terminal Screen Output

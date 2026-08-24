@@ -167,7 +167,7 @@ fun EditorScreen(navController: NavController, projectName: String) {
                         }) { Icon(Icons.Default.NoteAdd, contentDescription = "New File") }
                     }
                 }
-                HorizontalDivider()
+                Divider()
                 
                 // Reactive file tree list
                 val fileList = remember(fileTreeTrigger, projectDir) {

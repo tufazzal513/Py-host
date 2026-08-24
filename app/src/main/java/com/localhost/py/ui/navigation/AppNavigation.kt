@@ -9,6 +9,8 @@ import androidx.navigation.navArgument
 import com.localhost.py.ui.screens.HomeScreen
 import com.localhost.py.ui.screens.ProjectDashboardScreen
 import com.localhost.py.ui.screens.EditorScreen
+import com.localhost.py.ui.screens.AdvancedTerminalScreen
+import com.localhost.py.ui.screens.WebPreviewScreen
 
 @Composable
 fun AppNavigation() {
@@ -28,6 +30,20 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val projectName = backStackEntry.arguments?.getString("projectName") ?: "Unknown"
             EditorScreen(navController, projectName)
+        }
+        composable(
+            route = "terminal/{projectName}",
+            arguments = listOf(navArgument("projectName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val projectName = backStackEntry.arguments?.getString("projectName") ?: "Unknown"
+            AdvancedTerminalScreen(navController, projectName)
+        }
+        composable(
+            route = "web_preview/{url}",
+            arguments = listOf(navArgument("url") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val url = backStackEntry.arguments?.getString("url") ?: ""
+            WebPreviewScreen(navController, url)
         }
     }
 }

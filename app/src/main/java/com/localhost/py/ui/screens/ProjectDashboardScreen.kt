@@ -129,7 +129,7 @@ fun ProjectDashboardScreen(
                             label = { Text("Python 3.11", fontSize = 11.sp) }
                         )
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                    Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Entry: main.py", style = MaterialTheme.typography.bodyMedium)
@@ -291,7 +291,7 @@ fun ProjectDashboardScreen(
                             }
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = Color.DarkGray)
+                    Divider(modifier = Modifier.padding(vertical = 4.dp), color = Color.DarkGray)
                     
                     val scrollState = rememberScrollState()
                     
@@ -309,7 +309,7 @@ fun ProjectDashboardScreen(
                     )
                     
                     if (isRunning) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = Color.DarkGray)
+                        Divider(modifier = Modifier.padding(vertical = 6.dp), color = Color.DarkGray)
                         var inputText by remember { mutableStateOf("") }
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             BasicTextField(
