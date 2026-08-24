@@ -52,7 +52,7 @@ class PythonProcessService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification(projectName))
         
         ProcessMonitor.currentProject.value = projectName
-        ProcessMonitor.isRunning.value = true
+        ProcessMonitor.startMonitoring(this)
         ProcessMonitor.clearOutput()
         
         val inputProvider = InputProvider()
@@ -69,7 +69,7 @@ class PythonProcessService : Service() {
             
             withContext(Dispatchers.Main) {
                 ProcessMonitor.appendOutput("\n[Process completed]")
-                ProcessMonitor.isRunning.value = false
+                ProcessMonitor.stopMonitoring()
                 ProcessMonitor.activeInputProvider = null
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -80,7 +80,7 @@ class PythonProcessService : Service() {
     private fun stopProcess() {
         currentExecutionJob?.cancel()
         ProcessMonitor.appendOutput("\n[Process forcibly stopped by user]")
-        ProcessMonitor.isRunning.value = false
+        ProcessMonitor.stopMonitoring()
         ProcessMonitor.activeInputProvider = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

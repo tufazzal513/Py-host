@@ -44,6 +44,8 @@ fun EditorScreen(navController: NavController, projectName: String) {
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var isCreatingFolder by remember { mutableStateOf(false) }
+    var isRenamingFile by remember { mutableStateOf(false) }
+    var renameTargetFile by remember { mutableStateOf<File?>(null) }
     var newFileName by remember { mutableStateOf("") }
     var targetParentDir by remember { mutableStateOf<File?>(projectDir) }
 
@@ -135,16 +137,30 @@ fun EditorScreen(navController: NavController, projectName: String) {
                             )
                             // Delete button
                             if (file.name != "main.py" && file.name != "requirements.txt") {
-                                IconButton(
-                                    onClick = { 
-                                        if (file.deleteRecursively()) {
-                                            if (currentFile == file) currentFile = null
-                                            fileTreeTrigger++ 
-                                        }
-                                    },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { 
+                                            renameTargetFile = file
+                                            newFileName = file.name
+                                            isRenamingFile = true
+                                            showCreateDialog = true
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Rename", modifier = Modifier.size(16.dp))
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                    IconButton(
+                                        onClick = { 
+                                            if (file.deleteRecursively()) {
+                                                if (currentFile == file) currentFile = null
+                                                fileTreeTrigger++ 
+                                            }
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                                    }
                                 }
                             }
                         }
@@ -217,8 +233,23 @@ fun EditorScreen(navController: NavController, projectName: String) {
                     // Code Editor
                     BasicTextField(
                         value = codeText,
-                        onValueChange = { 
-                            codeText = it
+                        onValueChange = { newText ->
+                            // Basic Auto Indentation
+                            var updatedText = newText
+                            if (newText.length > codeText.length) {
+                                val charAdded = newText.lastOrNull()
+                                if (charAdded == '\n') {
+                                    val lines = newText.split('\n')
+                                    if (lines.size > 1) {
+                                        val prevLine = lines[lines.size - 2]
+                                        val indent = prevLine.takeWhile { it.isWhitespace() }
+                                        val addExtraIndent = prevLine.trimEnd().endsWith(":")
+                                        val finalIndent = if (addExtraIndent) "$indent    " else indent
+                                        updatedText = newText + finalIndent
+                                    }
+                                }
+                            }
+                            codeText = updatedText
                             hasUnsavedChanges = true
                         },
                         modifier = Modifier
@@ -241,12 +272,17 @@ fun EditorScreen(navController: NavController, projectName: String) {
 
     if (showCreateDialog) {
         AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            title = { Text(if (isCreatingFolder) "Create Folder" else "Create File") },
+            onDismissRequest = { 
+                showCreateDialog = false
+                isRenamingFile = false
+            },
+            title = { Text(if (isRenamingFile) "Rename" else if (isCreatingFolder) "Create Folder" else "Create File") },
             text = {
                 Column {
-                    Text("Inside: \${targetParentDir?.name ?: projectDir?.name}")
-                    Spacer(Modifier.height(8.dp))
+                    if (!isRenamingFile) {
+                        Text("Inside: \${targetParentDir?.name ?: projectDir?.name}")
+                        Spacer(Modifier.height(8.dp))
+                    }
                     OutlinedTextField(
                         value = newFileName,
                         onValueChange = { newFileName = it },
@@ -257,22 +293,36 @@ fun EditorScreen(navController: NavController, projectName: String) {
             },
             confirmButton = {
                 Button(onClick = {
-                    if (newFileName.isNotBlank() && targetParentDir != null) {
-                        val newEntity = File(targetParentDir, newFileName)
-                        if (isCreatingFolder) {
-                            newEntity.mkdirs()
-                        } else {
-                            newEntity.parentFile?.mkdirs()
-                            newEntity.createNewFile()
+                    if (newFileName.isNotBlank()) {
+                        if (isRenamingFile && renameTargetFile != null) {
+                            val newEntity = File(renameTargetFile!!.parentFile, newFileName)
+                            if (!newEntity.exists()) {
+                                renameTargetFile!!.renameTo(newEntity)
+                                if (currentFile == renameTargetFile) {
+                                    currentFile = newEntity
+                                }
+                            }
+                        } else if (targetParentDir != null) {
+                            val newEntity = File(targetParentDir, newFileName)
+                            if (isCreatingFolder) {
+                                newEntity.mkdirs()
+                            } else {
+                                newEntity.parentFile?.mkdirs()
+                                newEntity.createNewFile()
+                            }
                         }
                         fileTreeTrigger++
                         showCreateDialog = false
+                        isRenamingFile = false
                         newFileName = ""
                     }
-                }) { Text("Create") }
+                }) { Text(if (isRenamingFile) "Rename" else "Create") }
             },
             dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { 
+                    showCreateDialog = false
+                    isRenamingFile = false
+                }) { Text("Cancel") }
             }
         )
     }

@@ -45,8 +45,8 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun createNewProject(name: String) {
-        storageManager.createProject(name)
+    fun createNewProject(name: String, template: String = "Basic Python") {
+        storageManager.createProject(name, template)
         loadProjects()
     }
 
@@ -94,6 +94,18 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
             _cloneStatus.value = if (success) "ZIP imported successfully" else "Failed to import ZIP"
             _isCloning.value = false
             if (success) loadProjects()
+        }
+    }
+
+    fun deleteProject(name: String) {
+        if (storageManager.deleteProject(name)) {
+            loadProjects()
+        }
+    }
+    
+    fun renameProject(oldName: String, newName: String) {
+        if (storageManager.renameProject(oldName, newName)) {
+            loadProjects()
         }
     }
 }

@@ -24,6 +24,10 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     val output: StateFlow<String> = ProcessMonitor.processOutput
     val isRunning: StateFlow<Boolean> = ProcessMonitor.isRunning
+    
+    val cpuUsage: StateFlow<String> = ProcessMonitor.cpuUsage
+    val ramUsage: StateFlow<String> = ProcessMonitor.ramUsage
+    val runtimeDuration: StateFlow<String> = ProcessMonitor.runtimeDuration
 
     private val _isInstalling = MutableStateFlow(false)
     val isInstalling: StateFlow<Boolean> = _isInstalling
@@ -86,7 +90,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
     
     fun clearOutput() {
-        ProcessMonitor.clearOutput()
+        ProcessMonitor.processOutput.value = "localhost@pymobile:~$ \n"
     }
     
     fun sendInput(text: String) {

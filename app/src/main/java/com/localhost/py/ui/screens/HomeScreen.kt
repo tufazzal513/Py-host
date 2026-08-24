@@ -11,6 +11,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +37,8 @@ fun HomeScreen(
     var showCloneDialog by remember { mutableStateOf(false) }
     var showImportZipDialog by remember { mutableStateOf(false) }
     var newProjectName by remember { mutableStateOf("") }
+    var selectedTemplate by remember { mutableStateOf("Basic Python") }
+    var expandedTemplateDropdown by remember { mutableStateOf(false) }
     var importProjectName by remember { mutableStateOf("") }
     var repoUrl by remember { mutableStateOf("") }
     var cloneProjectName by remember { mutableStateOf("") }
@@ -102,16 +107,77 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(projects) { project ->
+                    var showMenu by remember { mutableStateOf(false) }
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable {
                             navController.navigate("dashboard/\${project.name}")
                         },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = project.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = project.path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = project.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = project.path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            }
+                            Box {
+                                IconButton(onClick = { showMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "More")
+                                }
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false }
+                                ) {
+                                    var showRenameDialog by remember { mutableStateOf(false) }
+                                    DropdownMenuItem(
+                                        text = { Text("Rename Project") },
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        onClick = {
+                                            showRenameDialog = true
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Delete Project", color = MaterialTheme.colorScheme.error) },
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                        onClick = {
+                                            viewModel.deleteProject(project.name)
+                                            showMenu = false
+                                        }
+                                    )
+                                    
+                                    if (showRenameDialog) {
+                                        var newName by remember { mutableStateOf(project.name) }
+                                        AlertDialog(
+                                            onDismissRequest = { showRenameDialog = false },
+                                            title = { Text("Rename Project") },
+                                            text = {
+                                                OutlinedTextField(
+                                                    value = newName,
+                                                    onValueChange = { newName = it },
+                                                    label = { Text("New Name") },
+                                                    singleLine = true
+                                                )
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = {
+                                                    if (newName.isNotBlank() && newName != project.name) {
+                                                        viewModel.renameProject(project.name, newName)
+                                                    }
+                                                    showRenameDialog = false
+                                                }) { Text("Rename") }
+                                            },
+                                            dismissButton = {
+                                                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -119,23 +185,57 @@ fun HomeScreen(
         }
 
         if (showCreateDialog) {
+            val templates = listOf("Basic Python", "Flask", "FastAPI", "Telegram Bot")
             AlertDialog(
                 onDismissRequest = { showCreateDialog = false },
                 title = { Text("New Project") },
                 text = {
-                    OutlinedTextField(
-                        value = newProjectName,
-                        onValueChange = { newProjectName = it },
-                        label = { Text("Project Name") },
-                        singleLine = true
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = newProjectName,
+                            onValueChange = { newProjectName = it },
+                            label = { Text("Project Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        ExposedDropdownMenuBox(
+                            expanded = expandedTemplateDropdown,
+                            onExpandedChange = { expandedTemplateDropdown = !expandedTemplateDropdown }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedTemplate,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Template") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTemplateDropdown) },
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedTemplateDropdown,
+                                onDismissRequest = { expandedTemplateDropdown = false }
+                            ) {
+                                templates.forEach { template ->
+                                    DropdownMenuItem(
+                                        text = { Text(template) },
+                                        onClick = {
+                                            selectedTemplate = template
+                                            expandedTemplateDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 },
                 confirmButton = {
                     TextButton(onClick = {
                         if (newProjectName.isNotBlank()) {
-                            viewModel.createNewProject(newProjectName)
+                            viewModel.createNewProject(newProjectName, selectedTemplate)
                             showCreateDialog = false
                             newProjectName = ""
+                            selectedTemplate = "Basic Python"
                         }
                     }) { Text("Create") }
                 },

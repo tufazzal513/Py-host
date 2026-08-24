@@ -38,6 +38,10 @@ fun ProjectDashboardScreen(
     val isInstalling by viewModel.isInstalling.collectAsState()
     
     var localServerPort by remember { mutableStateOf("5000") }
+    val cpuUsage by viewModel.cpuUsage.collectAsState()
+    val ramUsage by viewModel.ramUsage.collectAsState()
+    val runtimeDuration by viewModel.runtimeDuration.collectAsState()
+    
     var showGitDialog by remember { mutableStateOf(false) }
     var commitMessage by remember { mutableStateOf("Update via PY LOCALHOST IDE") }
     var gitToken by remember { mutableStateOf("") }
@@ -109,6 +113,15 @@ fun ProjectDashboardScreen(
                         else -> MaterialTheme.colorScheme.primary
                     }
                     Text(text = statusText, style = MaterialTheme.typography.bodyMedium, color = statusColor)
+                    
+                    if (isRunning) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("CPU: $cpuUsage", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("RAM: $ramUsage", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Time: $runtimeDuration", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
 
@@ -182,7 +195,7 @@ fun ProjectDashboardScreen(
             if (output.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)) // Dark Terminal Background
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
@@ -190,13 +203,13 @@ fun ProjectDashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Output Console", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                            Text("Terminal", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4CAF50)) // Green title
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(
                                     onClick = {
                                         val sendIntent: Intent = Intent().apply {
                                             action = Intent.ACTION_SEND
-                                            putExtra(Intent.EXTRA_TEXT, "Log from \$projectName:\n\n\$output")
+                                            putExtra(Intent.EXTRA_TEXT, "Log from \${projectName}:\n\n\${output}")
                                             type = "text/plain"
                                         }
                                         val shareIntent = Intent.createChooser(sendIntent, "Share Output Console")
@@ -204,14 +217,14 @@ fun ProjectDashboardScreen(
                                     },
                                     modifier = Modifier.size(32.dp)
                                 ) {
-                                    Icon(Icons.Default.Share, contentDescription = "Share Logs", modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Share, contentDescription = "Share Logs", modifier = Modifier.size(16.dp), tint = Color.LightGray)
                                 }
                                 TextButton(onClick = { viewModel.clearOutput() }) {
-                                    Text("Clear", fontSize = 12.sp)
+                                    Text("Clear", fontSize = 12.sp, color = Color.LightGray)
                                 }
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = Color.DarkGray)
                         
                         val scrollState = rememberScrollState()
                         
@@ -221,21 +234,29 @@ fun ProjectDashboardScreen(
                         
                         Text(
                             text = output,
-                            style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface),
+                            style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = Color(0xFFD4D4D4)), // Terminal Light Gray text
                             modifier = Modifier.weight(1f).verticalScroll(scrollState).fillMaxWidth()
                         )
                         
                         if (isRunning) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.DarkGray)
                             var inputText by remember { mutableStateOf("") }
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                                OutlinedTextField(
+                                BasicTextField(
                                     value = inputText,
                                     onValueChange = { inputText = it },
-                                    modifier = Modifier.weight(1f),
-                                    placeholder = { Text("Terminal input...", fontSize = 12.sp) },
-                                    singleLine = true,
-                                    textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+                                    modifier = Modifier.weight(1f).background(Color(0xFF2D2D2D)).padding(8.dp),
+                                    textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 14.sp),
+                                    cursorBrush = SolidColor(Color.White),
+                                    decorationBox = { innerTextField ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("> ", color = Color(0xFF4CAF50), fontFamily = FontFamily.Monospace)
+                                            if (inputText.isEmpty()) {
+                                                Text("stdin input...", color = Color.Gray, fontSize = 12.sp)
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(
@@ -245,9 +266,9 @@ fun ProjectDashboardScreen(
                                             inputText = ""
                                         }
                                     },
-                                    colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.primary, shape = MaterialTheme.shapes.small).size(36.dp)
                                 ) {
-                                    Icon(Icons.Default.Send, contentDescription = "Send Input")
+                                    Icon(Icons.Default.Send, contentDescription = "Send Input", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
