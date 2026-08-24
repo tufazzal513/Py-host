@@ -67,11 +67,7 @@ android {
 chaquopy {
     defaultConfig {
         version = "3.11"
-        pip {
-            install("pip")
-            install("setuptools")
-            install("wheel")
-        }
+        buildPython("python3")
     }
 }
 
