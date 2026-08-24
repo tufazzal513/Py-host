@@ -110,7 +110,7 @@ fun HomeScreen(
                     var showMenu by remember { mutableStateOf(false) }
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            navController.navigate("dashboard/\${project.name}")
+                            navController.navigate("dashboard/${project.name}")
                         },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
