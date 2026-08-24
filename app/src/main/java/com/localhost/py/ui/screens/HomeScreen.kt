@@ -209,7 +209,7 @@ fun HomeScreen(
                                 readOnly = true,
                                 label = { Text("Template") },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTemplateDropdown) },
-                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                colors = OutlinedTextFieldDefaults.colors(),
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
                             )
                             ExposedDropdownMenu(
