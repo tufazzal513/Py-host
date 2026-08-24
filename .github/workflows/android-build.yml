@@ -35,14 +35,12 @@ jobs:
         gradle-version: '8.2'
         cache-disabled: true
 
-    - name: Grant Execute Permission for Gradle
-      run: |
-        gradle wrapper --gradle-version 8.2
-        chmod +x gradlew
+    - name: Grant Execute Permission for Gradle Wrapper
+      run: chmod +x ./gradlew
 
-    - name: Build Debug APK
+    - name: Build Debug APK with Wrapper
       run: |
-        ./gradlew assembleDebug --no-daemon --info --stacktrace
+        ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
