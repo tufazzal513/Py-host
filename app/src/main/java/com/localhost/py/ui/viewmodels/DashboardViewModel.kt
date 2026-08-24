@@ -2,6 +2,7 @@ package com.localhost.py.ui.viewmodels
 
 import android.app.Application
 import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.localhost.py.data.git.GitManager
@@ -50,11 +51,35 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun restartProject(projectName: String) {
+        val projectDir = storageManager.getProjectDir(projectName)
+        if (projectDir != null) {
+            val intent = Intent(context, PythonProcessService::class.java).apply {
+                action = PythonProcessService.ACTION_RESTART
+                putExtra(PythonProcessService.EXTRA_PROJECT_DIR, projectDir.absolutePath)
+                putExtra(PythonProcessService.EXTRA_PROJECT_NAME, projectName)
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+    }
+
     fun stopProject() {
         val intent = Intent(context, PythonProcessService::class.java).apply {
             action = PythonProcessService.ACTION_STOP
         }
         context.startService(intent)
+    }
+
+    fun clearOutput() {
+        ProcessMonitor.clearOutput()
+    }
+
+    fun sendInput(text: String) {
+        ProcessMonitor.sendInput(text)
     }
 
     fun installDependencies(projectName: String) {
@@ -83,51 +108,48 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             ProcessMonitor.appendOutput("\n[Git]: Committing changes...\n")
             val projectDir = storageManager.getProjectDir(projectName)
             if (projectDir != null) {
-                val result = gitManager.commitAndPush(projectDir, message, token)
-                ProcessMonitor.appendOutput("[Git]: $result\n")
-            } else {
-                ProcessMonitor.appendOutput("[Git Error]: Project directory not found.\n")
+                val resultMsg = gitManager.commitAndPush(projectDir, message, token)
+                ProcessMonitor.appendOutput("[Git]: $resultMsg\n")
             }
             _isInstalling.value = false
         }
     }
-    
-    fun clearOutput() {
-        ProcessMonitor.processOutput.value = "localhost@pymobile:~$ \n"
-    }
-    
-    fun sendInput(text: String) {
-        ProcessMonitor.sendInput(text)
-    }
 
-    fun exportZip(projectName: String, uri: android.net.Uri) {
-        viewModelScope.launch {
-            _isInstalling.value = true
-            ProcessMonitor.appendOutput("\nExporting project to ZIP...\n")
-            val success = withContext(Dispatchers.IO) {
-                try {
-                    val tempFile = File.createTempFile("export", ".zip", context.cacheDir)
-                    val result = storageManager.exportProjectZip(projectName, tempFile)
-                    if (result) {
-                        context.contentResolver.openOutputStream(uri)?.use { output ->
-                            tempFile.inputStream().use { input ->
-                                input.copyTo(output)
+    fun exportZip(projectName: String, targetUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val projectDir = storageManager.getProjectDir(projectName)
+            if (projectDir == null) {
+                withContext(Dispatchers.Main) {
+                    ProcessMonitor.appendOutput("\n[Storage]: Error - Project directory not found.\n")
+                }
+                return@launch
+            }
+            try {
+                context.contentResolver.openOutputStream(targetUri)?.use { os ->
+                    java.util.zip.ZipOutputStream(os).use { zos ->
+                        projectDir.walkTopDown().forEach { file ->
+                            val name = file.toRelativeString(projectDir)
+                            if (name.isNotEmpty() && !name.contains(".packages") && !name.contains("__pycache__")) {
+                                if (file.isDirectory) {
+                                    zos.putNextEntry(java.util.zip.ZipEntry("$name/"))
+                                    zos.closeEntry()
+                                } else {
+                                    zos.putNextEntry(java.util.zip.ZipEntry(name))
+                                    file.inputStream().use { it.copyTo(zos) }
+                                    zos.closeEntry()
+                                }
                             }
                         }
                     }
-                    tempFile.delete()
-                    result
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
+                }
+                withContext(Dispatchers.Main) {
+                    ProcessMonitor.appendOutput("\n[Storage]: Project exported successfully to chosen file.\n")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    ProcessMonitor.appendOutput("\n[Storage]: Export failed: ${e.message}\n")
                 }
             }
-            if (success) {
-                ProcessMonitor.appendOutput("Project exported successfully.\n")
-            } else {
-                ProcessMonitor.appendOutput("Error: Failed to export project.\n")
-            }
-            _isInstalling.value = false
         }
     }
 }

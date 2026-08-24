@@ -31,7 +31,7 @@ class GitManager {
 
             git.use { repo ->
                 repo.add().addFilepattern(".").call()
-                repo.commit().setMessage(message.ifBlank { "Update via PY LOCALHOST" }).call()
+                repo.commit().setMessage(message.ifBlank { "Update via PyMobile IDE" }).call()
 
                 if (token.isNotBlank()) {
                     val creds = UsernamePasswordCredentialsProvider(token, "")
@@ -43,6 +43,28 @@ class GitManager {
             }
         } catch (e: Exception) {
             e.message ?: "Git operation failed."
+        }
+    }
+
+    suspend fun getStatus(projectDir: File): String = withContext(Dispatchers.IO) {
+        try {
+            val git = Git.open(projectDir)
+            git.use { repo ->
+                val status = repo.status().call()
+                val sb = StringBuilder()
+                sb.append("Branch: ${repo.repository.branch}\n")
+                if (status.isClean) {
+                    sb.append("Working tree clean. Nothing to commit.\n")
+                } else {
+                    if (status.modified.isNotEmpty()) sb.append("Modified: ${status.modified.joinToString()}\n")
+                    if (status.untracked.isNotEmpty()) sb.append("Untracked: ${status.untracked.joinToString()}\n")
+                    if (status.added.isNotEmpty()) sb.append("Added: ${status.added.joinToString()}\n")
+                    if (status.removed.isNotEmpty()) sb.append("Removed: ${status.removed.joinToString()}\n")
+                }
+                sb.toString()
+            }
+        } catch (e: Exception) {
+            "Not a git repository (or unable to read status)."
         }
     }
 }
