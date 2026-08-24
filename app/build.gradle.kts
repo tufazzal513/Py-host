@@ -18,7 +18,25 @@ android {
             useSupportLibrary = true
         }
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module",
+                "META-INF/INDEX.LIST",
+                "/META-INF/{AL2.0,LGPL2.1}"
+            )
         }
     }
 
@@ -49,6 +67,7 @@ android {
 chaquopy {
     defaultConfig {
         version = "3.11"
+        buildPython("python3")
     }
 }
 
