@@ -64,8 +64,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             
             val projectDir = storageManager.getProjectDir(projectName)
             if (projectDir != null) {
-                val result = pythonRuntime.installDependencies(projectDir.absolutePath)
-                ProcessMonitor.appendOutput(result)
+                pythonRuntime.installDependencies(projectDir.absolutePath, object : com.localhost.py.pythonruntime.OutputCallback {
+                    override fun onOutput(text: String) {
+                        ProcessMonitor.appendOutput(text)
+                    }
+                })
             } else {
                 ProcessMonitor.appendOutput("Error: Project directory not found.\n")
             }

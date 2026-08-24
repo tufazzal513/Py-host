@@ -22,43 +22,18 @@ class PythonSyntaxHighlighter : VisualTransformation {
             val functionColor = Color(0xFFFFC66D) // Yellow
             val builtinColor = Color(0xFF8888C6) // Purple-ish
 
-            val keywords = "\\b(and|as|assert|async|await|break|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\\b".toRegex()
-            val builtins = "\\b(print|len|range|str|int|float|list|dict|set|tuple|open|type|dir|help|input)\\b".toRegex()
-            val strings = "\".*?\"|'.*?'".toRegex()
-            val comments = "#.*".toRegex()
-            val numbers = "\\b\\d+(\\.\\d+)?\\b".toRegex()
-            val functions = "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()".toRegex()
+            val pattern = "(#.*)|(\"(?:\\\\.|[^\"])*\"|'(?:\\\\.|[^'])*')|\\b(and|as|assert|async|await|break|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\\b|\\b(print|len|range|str|int|float|list|dict|set|tuple|open|type|dir|help|input)\\b|\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()|\\b(\\d+(?:\\.\\d+)?)\\b".toRegex()
 
-            // Apply functions first
-            functions.findAll(inputText).forEach {
-                if (!keywords.matches(it.groupValues[1])) {
-                    addStyle(SpanStyle(color = functionColor), it.range.first, it.range.last + 1)
+            pattern.findAll(inputText).forEach { matchResult ->
+                val groups = matchResult.groups
+                when {
+                    groups[1] != null -> addStyle(SpanStyle(color = commentColor), groups[1]!!.range.first, groups[1]!!.range.last + 1)
+                    groups[2] != null -> addStyle(SpanStyle(color = stringColor), groups[2]!!.range.first, groups[2]!!.range.last + 1)
+                    groups[3] != null -> addStyle(SpanStyle(color = keywordColor), groups[3]!!.range.first, groups[3]!!.range.last + 1)
+                    groups[4] != null -> addStyle(SpanStyle(color = builtinColor), groups[4]!!.range.first, groups[4]!!.range.last + 1)
+                    groups[5] != null -> addStyle(SpanStyle(color = functionColor), groups[5]!!.range.first, groups[5]!!.range.last + 1)
+                    groups[6] != null -> addStyle(SpanStyle(color = numberColor), groups[6]!!.range.first, groups[6]!!.range.last + 1)
                 }
-            }
-            
-            // Apply built-ins
-            builtins.findAll(inputText).forEach {
-                addStyle(SpanStyle(color = builtinColor), it.range.first, it.range.last + 1)
-            }
-            
-            // Apply numbers
-            numbers.findAll(inputText).forEach {
-                addStyle(SpanStyle(color = numberColor), it.range.first, it.range.last + 1)
-            }
-
-            // Apply keywords
-            keywords.findAll(inputText).forEach {
-                addStyle(SpanStyle(color = keywordColor), it.range.first, it.range.last + 1)
-            }
-
-            // Apply strings
-            strings.findAll(inputText).forEach {
-                addStyle(SpanStyle(color = stringColor), it.range.first, it.range.last + 1)
-            }
-
-            // Apply comments (last so they override content inside)
-            comments.findAll(inputText).forEach {
-                addStyle(SpanStyle(color = commentColor), it.range.first, it.range.last + 1)
             }
         }
         return TransformedText(annotatedString, OffsetMapping.Identity)

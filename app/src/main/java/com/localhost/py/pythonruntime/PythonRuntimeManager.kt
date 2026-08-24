@@ -15,13 +15,13 @@ class PythonRuntimeManager {
         }
     }
 
-    suspend fun installDependencies(projectDir: String): String = withContext(Dispatchers.IO) {
+    suspend fun installDependencies(projectDir: String, callback: OutputCallback) = withContext(Dispatchers.IO) {
         try {
             val py = Python.getInstance()
             val installer = py.getModule("installer")
-            installer.callAttr("install_requirements", projectDir).toString()
+            installer.callAttr("install_requirements", projectDir, callback)
         } catch (e: Exception) {
-            e.message ?: "Dependency installation error"
+            callback.onOutput("\n[Runtime Error]: ${e.message}\n")
         }
     }
 }
